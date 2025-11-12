@@ -41,7 +41,8 @@ public class LargeDocumentIngestion {
         // 2. Chunk the Documents
         // TokenTextSplitter is essential for large docs. 
         // We use a small overlap (100 tokens) to preserve context across splits.
-        TokenTextSplitter textSplitter = new TokenTextSplitter().builder().withChunkSize(550).withMinChunkSizeChars(150).withKeepSeparator(false).build(); 
+        // Use the builder to set the chunk size and overlap
+        TokenTextSplitter textSplitter = TokenTextSplitter.builder().withChunkSize(550).withMinChunkSizeChars(150).withKeepSeparator(false).build(); 
 
         // Read, split, and get the final list of chunks
         List<Document> documents = pdfReader.get()
