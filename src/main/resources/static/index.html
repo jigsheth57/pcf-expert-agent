@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAS/PCF Expert RAG Chat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>TAS/PCF Expert Advisory Chat 🧠</h1>
+        <p>Ask a technical question about Pivotal Cloud Foundry (PCF) / Tanzu Application Service (TAS).</p>
+        
+        <div class="chat-input">
+            <textarea id="questionInput" placeholder="e.g., How do I scale an application instance in PCF?"></textarea>
+            <button id="submitButton" onclick="askExpert()">Ask Expert</button>
+        </div>
+
+        <div id="responseArea" class="chat-output">
+            <p class="placeholder">Response will appear here...</p>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

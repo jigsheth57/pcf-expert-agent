@@ -1,0 +1,79 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7f9;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.container {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+}
+
+h1 {
+    color: #007bff;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+p {
+    text-align: center;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.chat-input {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+#questionInput {
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 100px;
+    font-size: 16px;
+}
+
+#submitButton {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+#submitButton:hover {
+    background-color: #1e7e34;
+}
+
+.chat-output {
+    min-height: 350px;
+    overflow: visible;
+    padding: 20px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    white-space: pre-wrap; /* Preserves formatting from the LLM response */
+    border-left: 5px solid #007bff;
+}
+
+.placeholder {
+    color: #999;
+}
+
+.error {
+    color: #dc3545;
+    font-weight: bold;
+}
