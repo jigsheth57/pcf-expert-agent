@@ -4,11 +4,12 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.core.io.Resource;
 
 @RestController
 @RequestMapping("/api")
@@ -29,19 +30,19 @@ public class ExpertRagController {
         
         // Build the ChatClient with the system message template
         this.chatClient = chatClientBuilder
+                .defaultAdvisors(new QuestionAnswerAdvisor(vectorStore))
                 .defaultSystem(systemMessage)
                 .build();
     }
 
-@GetMapping("/expert-rag")
-    public String expertRagChat(@RequestParam(value = "message") String message) {
+@GetMapping("/assistant")
+    public String expertRagChat(@PathVariable String user, @RequestParam(value = "message") String message) {
         
         // Use QuestionAnswerAdvisor to perform RAG:
         // 1. Search the VectorStore (PGVector) for relevant documents.
         // 2. Insert the retrieved documents into the {documents} placeholder in the system message.
         // 3. Send the augmented prompt to the LLM (Ollama).
         return chatClient.prompt()
-                .advisors(new QuestionAnswerAdvisor(vectorStore))
                 .user(message)
                 .call()
                 .content();
