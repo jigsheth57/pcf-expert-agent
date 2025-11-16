@@ -1,5 +1,5 @@
 // URL of your Spring Boot endpoint
-const RAG_ENDPOINT = '/api/engineer/assistant'; 
+const RAG_ENDPOINT = '/api/assistant'; 
 
 /**
  * Handles the logic for sending the question and receiving the expert's response.

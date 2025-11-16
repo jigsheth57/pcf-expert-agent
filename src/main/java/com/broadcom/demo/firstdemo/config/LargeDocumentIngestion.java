@@ -1,8 +1,11 @@
 package com.broadcom.demo.firstdemo.config;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.ai.document.Document;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -16,12 +19,15 @@ import jakarta.annotation.PostConstruct;
 public class LargeDocumentIngestion {
 
     private final VectorStore vectorStore;
-
+    private final EmbeddingModel embeddingModel;
+// Key used by most VectorStore implementations to check for a pre-computed embedding
+    private static final String EMBEDDING_KEY = "embedding";
     // Inject the PDF resource from the resources folder
     @Value("classpath:/tas-for-vms.pdf")
     private Resource pdfResource; 
 
-    public LargeDocumentIngestion(VectorStore vectorStore) {
+    public LargeDocumentIngestion(EmbeddingModel embeddingModel, VectorStore vectorStore) {
+        this.embeddingModel = embeddingModel;
         this.vectorStore = vectorStore;
     }
 
@@ -54,10 +60,64 @@ public class LargeDocumentIngestion {
         System.out.printf("📄 PDF Read. Total documents/chunks created: %d%n", documents.size());
         
         // 3. Store the Embeddings
+        // ingestDocumentsWithPrecomputedEmbeddings(documents);
         // The add() method automatically embeds the documents using the configured OllamaEmbeddingModel
         vectorStore.add(documents);
 
         System.out.println("✅ Ingestion complete. Documents embedded and stored in PGVector.");
+    }
+
+
+/**
+     * Ingests a large list of documents by pre-calculating embeddings in parallel batches
+     * and injecting them into the Document metadata to bypass the VectorStore's internal embedding step.
+     *
+     * @param rawDocuments The list of documents to process and ingest.
+     */
+    public void ingestDocumentsWithPrecomputedEmbeddings(List<Document> rawDocuments) {
+        if (rawDocuments.isEmpty()) {
+            System.out.println("No documents provided for ingestion.");
+            return;
+        }
+
+        // --- 1. PREPARE TEXT CHUNKS FOR BATCHING ---
+        // Extract the content from all documents into a single list of strings
+        List<String> textChunks = rawDocuments.stream()
+                .map(Document::getFormattedContent)
+                .collect(Collectors.toList());
+
+        System.out.printf("Starting batch embedding generation for %d documents (chunks).%n", textChunks.size());
+
+        // --- 2. PARALLELIZED/BATCHED EMBEDDING GENERATION ---
+        // Spring AI's EmbeddingModel.embed(List<String>) is generally optimized for batching.
+        // We call it once for all content to minimize overhead and leverage the model's batch capabilities.
+        // For extremely large lists, you might manually chunk this list further before calling embed().
+        List<float[]> embeddings = embeddingModel.embed(textChunks);
+
+        if (embeddings.size() != rawDocuments.size()) {
+            throw new IllegalStateException("Embedding count does not match document count.");
+        }
+
+        System.out.printf("Successfully generated %d embeddings. Proceeding to injection.%n", embeddings.size());
+
+        // --- 3. INJECT EMBEDDINGS INTO DOCUMENT METADATA ---
+        List<Document> documentsWithEmbeddings = new ArrayList<>();
+        for (int i = 0; i < rawDocuments.size(); i++) {
+            Document doc = rawDocuments.get(i);
+            float[] vector = embeddings.get(i);
+            
+            // CRITICAL STEP: Store the vector in the metadata under the 'embedding' key
+            doc.getMetadata().put(EMBEDDING_KEY, vector);
+            documentsWithEmbeddings.add(doc);
+        }
+
+        // --- 4. BYPASS EMBEDDING AND ADD TO VECTORSTORE ---
+        // The VectorStore checks the metadata for the 'embedding' key.
+        // Since it's present, it skips the slow embedding generation and just performs the database insert.
+        System.out.printf("Injecting %d documents into the VectorStore (bypassing embedding step).%n", documentsWithEmbeddings.size());
+        vectorStore.add(documentsWithEmbeddings);
+        
+        System.out.println("Ingestion complete.");
     }
 
 /**

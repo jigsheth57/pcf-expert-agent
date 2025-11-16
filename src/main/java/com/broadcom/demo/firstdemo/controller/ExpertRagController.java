@@ -36,7 +36,7 @@ public class ExpertRagController {
     }
 
 @GetMapping("/assistant")
-    public String expertRagChat(@PathVariable String user, @RequestParam(value = "message") String message) {
+    public String expertRagChat(@RequestParam(value = "message") String message) {
         
         // Use QuestionAnswerAdvisor to perform RAG:
         // 1. Search the VectorStore (PGVector) for relevant documents.
