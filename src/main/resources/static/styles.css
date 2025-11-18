@@ -59,14 +59,22 @@ p {
     background-color: #1e7e34;
 }
 
+#markdown-container p, 
+#markdown-container h1, 
+#markdown-container ul,
+#markdown-container ol {
+    text-align: left; /* Aligns text to the left */
+}
+
 .chat-output {
     min-height: 350px;
-    overflow: visible;
+    overflow: auto;
     padding: 20px;
     background-color: #e9ecef;
     border-radius: 8px;
     white-space: pre-wrap; /* Preserves formatting from the LLM response */
     border-left: 5px solid #007bff;
+    text-align: left !important;
 }
 
 .placeholder {

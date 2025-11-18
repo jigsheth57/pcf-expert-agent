@@ -23,7 +23,9 @@
 
 `CREATE ROLE myappuser WITH LOGIN PASSWORD 'mypassword';`
 
-`GRANT ALL PRIVILEGES ON DATABASE postgres TO myappuser;`
+`CREATE DATABASE techdocdb OWNER myappuser;`
+
+`GRANT ALL PRIVILEGES ON DATABASE techdocdb TO myappuser;`
 
 `GRANT USAGE ON SCHEMA public TO myappuser;`
 

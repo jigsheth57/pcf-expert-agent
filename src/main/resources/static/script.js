@@ -34,7 +34,7 @@ async function askExpert() {
         const expertAnswer = await response.text();
 
         // 4. Display the answer
-        responseArea.innerHTML = expertAnswer;
+        responseArea.innerHTML = marked.parse(expertAnswer);
         responseArea.classList.remove('error');
 
     } catch (error) {
