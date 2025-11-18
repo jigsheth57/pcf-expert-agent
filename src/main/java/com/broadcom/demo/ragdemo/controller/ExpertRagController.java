@@ -39,12 +39,12 @@ public class ExpertRagController {
                 .build();
     }
 
-@GetMapping("/loaddata")
-public String loadPDF() {
-    return docLoad.ingestPdf();
-}
+    @GetMapping("/loaddata")
+    public String loadPDF() {
+        return docLoad.ingestPdf();
+    }
 
-@GetMapping("/assistant")
+    @GetMapping("/assistant")
     public String expertRagChat(@RequestParam(value = "message") String message) {
 
 
