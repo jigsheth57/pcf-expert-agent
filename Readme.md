@@ -1,57 +1,21 @@
-# spring-ai-examples
-## Intelligent technical document querying
+## Here are the key points detailing the workflow for the Specialized Technical Knowledge Retrieval Agent:
 
-### Setup in Macos
+## ⚙️ Document Preparation & Storage
 
-#### Install Postgres
+* **Document Loading:** The **TAS for VMs (PCF/TAS) v6 technical manual** is read and converted into raw text.
+* **Embedding Generation:** The converted text is chunked into multiple documents, each approximately **500 words** in length. **Vector embeddings** for these chunks are generated using the **mxbai-embed-large LLM**.
+* **Vector Storage:** The resulting vector embeddings are stored in a **Vector Store**, specifically **Postgres with the PGVector extension**.
 
-`brew install postgresql@18`
+***
 
-`brew install pgvector`
+## 💬 User Request Processing & Response
 
-`export PATH="/opt/homebrew/opt/postgresql@18/bin:$PATH"`
+* **Role Creation (Prompt Engineering):** A **system role/prompt** is created for the **llama3.2 chat model** to establish it as a **TAS for VMs expert** that must operate within a strict **contextual boundary**.
+* **Semantic Search:** A **semantic search** is performed on the **Postgres PGVector** database to retrieve documents. The retrieval criterion is that the documents must be **no more than 40 degrees apart** (presumably a similarity threshold) from the user's query vector.
+* **Response Generation:** The final prompt sent to the **llama3.2 chat model** is composed of three components:
+    * The **Specialized Technical Support Architect** system prompt.
+    * The relevant **semantic search results (context)**.
+    * The **user's original query**.
+* **Output Format:** The chat model's final response is to be delivered to the user in **layman's terms** (non-technical, accessible language).
 
-`export LDFLAGS="-L/opt/homebrew/opt/postgresql@18/lib"`
-
-`export CPPFLAGS="-I/opt/homebrew/opt/postgresql@18/include"`
-
-`brew services start postgresql@18`
-
-#### configure postgres for Vector extension and a user
-
-`psql postgres`
-
-`CREATE ROLE myappuser WITH LOGIN PASSWORD 'mypassword';`
-
-`CREATE DATABASE techdocdb OWNER myappuser;`
-
-`GRANT ALL PRIVILEGES ON DATABASE techdocdb TO myappuser;`
-
-`GRANT USAGE ON SCHEMA public TO myappuser;`
-
-`GRANT CREATE ON SCHEMA public TO myappuser;`
-
-`\c techdocdb`
-
-`CREATE EXTENSION vector;`
-
-`\dx`
-
-`CREATE TABLE vector_store (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    content TEXT, -- The actual text content of the document (your .txt file descriptions)
-    metadata JSON, -- The associated metadata (like image_file_name)
-    embedding VECTOR(1024)
-);
-CREATE INDEX ON vector_store USING HNSW (embedding vector_cosine_ops) WITH (M = 16, EF_CONSTRUCTION = 128);`
-
-#### Install Ollama & download LLM models
-
-`brew install ollama`
-
-`brew services start ollama`
-
-`ollama pull mxbai-embed-large`
-
-`ollama pull llama3.2`
-
+![Specialized Technical Knowledge Retrieval](./screen-shot.png "Specialized Technical Knowledge Retrieval")
