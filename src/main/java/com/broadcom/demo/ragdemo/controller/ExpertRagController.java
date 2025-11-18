@@ -61,8 +61,8 @@ public class ExpertRagController {
         // 2. Insert the retrieved documents into the {documents} placeholder in the system message.
         // 3. Send the augmented prompt to the LLM (Ollama).
         return chatClient.prompt()
-                .user(message)
                 .advisors(QuestionAnswerAdvisor.builder(vectorStore).searchRequest(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).similarityThreshold(0.6).topK(5).build()).build())
+                .user(message)
                 .call()
                 .content();
     }

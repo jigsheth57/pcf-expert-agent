@@ -30,4 +30,3 @@ Your entire knowledge base is strictly limited to the official "tas-for-vms.pdf"
         > "I can only provide answers and details based on the contents of the **TAS for VMs Technical Documentation** manual. Please rephrase your question to relate directly to the content of that technical guide."
 
 Context:
-{documents}
