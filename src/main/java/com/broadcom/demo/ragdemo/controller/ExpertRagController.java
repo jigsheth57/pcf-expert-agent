@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -56,13 +57,25 @@ public class ExpertRagController {
         for (int i = 0; i < documents.size(); i++) {
             System.out.println("Element at index " + i + ": " + documents.get(i).getScore());
         }
+        // 1. Define the format you want the model to see
+        // The advisor will append this to the user's query.
+        String customAdvisorText = """
+            <context>
+            {question_answer_context}
+            </context>
+            """;
+        PromptTemplate customPromptTemplate = new PromptTemplate(customAdvisorText);
+        QuestionAnswerAdvisor ragAdvisor = QuestionAnswerAdvisor.builder(vectorStore)
+            .searchRequest(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).similarityThreshold(0.65).topK(3).build())
+            .promptTemplate(customPromptTemplate)
+            .build();        
         // Use QuestionAnswerAdvisor to perform RAG:
         // 1. Search the VectorStore (PGVector) for relevant documents.
         // 2. Insert the retrieved documents into the {documents} placeholder in the system message.
         // 3. Send the augmented prompt to the LLM (Ollama).
         return chatClient.prompt()
-                .advisors(QuestionAnswerAdvisor.builder(vectorStore).searchRequest(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).similarityThreshold(0.6).topK(5).build()).build())
                 .user(message)
+                .advisors(ragAdvisor)
                 .call()
                 .content();
     }
