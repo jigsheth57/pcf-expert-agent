@@ -18,4 +18,4 @@
     * The **user's original query**.
 * **Output Format:** The chat model's final response is to be delivered to the user.
 
-![Specialized Technical Knowledge Retrieval](./screen-shot.png "Specialized Technical Knowledge Retrieval")
+![Specialized Technical Knowledge Retrieval](./screenshot.png "Specialized Technical Knowledge Retrieval")

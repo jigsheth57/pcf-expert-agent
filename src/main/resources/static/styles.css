@@ -1,62 +1,257 @@
+:root {
+    --primary-color: #2563eb; /* Modern Royal Blue */
+    --primary-hover: #1d4ed8;
+    --bg-color: #f3f4f6;
+    --card-bg: #ffffff;
+    --text-main: #1f2937;
+    --text-sub: #6b7280;
+    --border-color: #e5e7eb;
+    --accent-green: #10b981;
+    --code-bg: #1f2937;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f7f9;
-    color: #333;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
     display: flex;
     justify-content: center;
-    padding: 20px;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 40px 20px;
+    background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+    background-size: 20px 20px;
 }
 
 .container {
-    background: #ffffff;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 800px;
+    max-width: 850px;
+    border: 1px solid white;
+}
+
+/* Header Styling */
+header {
+    text-align: center;
+    margin-bottom: 30px;
 }
 
 h1 {
-    color: #007bff;
-    text-align: center;
-    margin-bottom: 5px;
+    color: #111827;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.025em;
 }
 
-p {
-    text-align: center;
-    color: #666;
-    margin-bottom: 25px;
+h1 span {
+    color: var(--primary-color);
 }
 
-.chat-input {
+p.subtitle {
+    color: var(--text-sub);
+    font-size: 0.95rem;
+}
+
+/* Input Section */
+.chat-input-area {
     display: flex;
     flex-direction: column;
-    margin-bottom: 20px;
+    gap: 15px;
+    margin-bottom: 30px;
+    position: relative;
 }
 
-#questionInput {
-    padding: 15px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+textarea#questionInput {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
     resize: vertical;
-    min-height: 100px;
-    font-size: 16px;
+    min-height: 120px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    background-color: #f9fafb;
 }
 
-#submitButton {
-    background-color: #28a745;
+textarea#questionInput:focus {
+    border-color: var(--primary-color);
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+/* Controls Toolbar */
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.radio-group {
+    display: flex;
+    background: #f3f4f6;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.radio-option {
+    position: relative;
+}
+
+.radio-option input {
+    display: none;
+}
+
+.radio-option label {
+    display: inline-block;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-sub);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.radio-option input:checked + label {
+    background-color: white;
+    color: var(--primary-color);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+button#submitButton {
+    background-color: var(--primary-color);
     color: white;
     border: none;
-    padding: 12px 20px;
+    padding: 10px 24px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-#submitButton:hover {
-    background-color: #1e7e34;
+button#submitButton:hover {
+    background-color: var(--primary-hover);
+}
+
+button#submitButton:active {
+    transform: scale(0.98);
+}
+
+/* Output Area */
+.response-wrapper {
+    position: relative;
+}
+
+.response-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-sub);
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.chat-output {
+    min-height: 300px;
+    padding: 24px;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    color: var(--text-main);
+    line-height: 1.6;
+    font-size: 0.95rem;
+    position: relative;
+}
+
+.placeholder {
+    color: #9ca3af;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 250px;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    display: none; /* Hidden by default */
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Markdown Styles for the Response */
+.chat-output h1, .chat-output h2, .chat-output h3 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: #111827;
+}
+
+.chat-output ul, .chat-output ol {
+    margin-left: 20px;
+    margin-bottom: 1em;
+}
+
+.chat-output code {
+    background-color: #f3f4f6;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: 'Menlo', 'Monaco', monospace;
+    font-size: 0.9em;
+    color: #c026d3;
+}
+
+.chat-output pre {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1em 0;
+}
+
+.chat-output pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+}
+
+.chat-output blockquote {
+    border-left: 4px solid var(--primary-color);
+    padding-left: 16px;
+    color: var(--text-sub);
+    margin: 1em 0;
+    background: #f9fafb;
+    padding: 10px 16px;
+    border-radius: 0 4px 4px 0;
 }
 
 #markdown-container p, 
@@ -64,24 +259,4 @@ p {
 #markdown-container ul,
 #markdown-container ol {
     text-align: left; /* Aligns text to the left */
-}
-
-.chat-output {
-    min-height: 350px;
-    overflow: auto;
-    padding: 20px;
-    background-color: #e9ecef;
-    border-radius: 8px;
-    white-space: pre-wrap; /* Preserves formatting from the LLM response */
-    border-left: 5px solid #007bff;
-    text-align: left !important;
-}
-
-.placeholder {
-    color: #999;
-}
-
-.error {
-    color: #dc3545;
-    font-weight: bold;
 }

@@ -1,5 +1,6 @@
 // URL of your Spring Boot endpoint
-const RAG_ENDPOINT = '/api/assistant'; 
+const CLOUD_RAG_ENDPOINT = '/api/assistant'; 
+const LOCAL_RAG_ENDPOINT = '/api/lassistant'; 
 
 /**
  * Handles the logic for sending the question and receiving the expert's response.
@@ -8,6 +9,7 @@ async function askExpert() {
     const inputElement = document.getElementById('questionInput');
     const responseArea = document.getElementById('responseArea');
     const submitButton = document.getElementById('submitButton');
+    const chatType = document.querySelector(`input[name="chattype"]:checked`);
     
     const question = inputElement.value.trim();
 
@@ -16,14 +18,21 @@ async function askExpert() {
         return;
     }
 
+    var api_url = LOCAL_RAG_ENDPOINT;
+
     // 1. Disable input and show loading state
     submitButton.disabled = true;
     submitButton.textContent = 'Analyzing Documentation...';
-    responseArea.innerHTML = '<p>Querying Ollama and PGVector...</p>';
+    if(chatType.value == "cloud") {
+        api_url = CLOUD_RAG_ENDPOINT;
+        responseArea.innerHTML = '<p>Querying Google Gemini and PGVector...</p>';
+    } else {
+        responseArea.innerHTML = '<p>Querying Ollama and PGVector...</p>';
+    }
     
     try {
         // 2. Make the API call
-        const response = await fetch(`${RAG_ENDPOINT}?message=${encodeURIComponent(question)}`);
+        const response = await fetch(`${api_url}?message=${encodeURIComponent(question)}`);
 
         if (!response.ok) {
             // Handle HTTP errors (e.g., 500 server error)

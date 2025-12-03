@@ -8,6 +8,7 @@ import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,12 +23,14 @@ import com.broadcom.demo.ragdemo.component.LargeDocumentIngestion;
 public class ExpertRagController {
 
     private final ChatClient chatClient;
+    private final ChatClient lclchatClient;
     private final VectorStore vectorStore;
     private final Resource systemMessage;
     private final LargeDocumentIngestion docLoad;
 
     public ExpertRagController(
-        ChatClient.Builder chatClientBuilder,
+        @Qualifier("proModel") org.springframework.ai.chat.model.ChatModel glchatModel,
+        @Qualifier("gemmaChatModel") org.springframework.ai.chat.model.ChatModel olchatModel,
         VectorStore vectorStore,
         LargeDocumentIngestion docLoad,
         @Value("classpath:/expert-system-message.st") Resource systemMessage) {
@@ -37,9 +40,13 @@ public class ExpertRagController {
         this.docLoad = docLoad;
 
         // Build the ChatClient with the system message template
-        this.chatClient = chatClientBuilder
+        this.chatClient = ChatClient.builder(glchatModel)
                 .defaultSystem(systemMessage)
                 .build();
+        this.lclchatClient = ChatClient.builder(olchatModel)
+                .defaultSystem(systemMessage)
+                .build();
+
     }
 
     @GetMapping("/loaddata")
@@ -51,12 +58,45 @@ public class ExpertRagController {
     public String expertRagChat(@RequestParam(value = "message") String message) {
 
 
-        List<Document> documents = vectorStore.similaritySearch(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).topK(5).build());
+        List<Document> documents = vectorStore.similaritySearch(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).similarityThreshold(0.65).topK(5).build());
 
         System.out.println("Found: "+documents.size());
         for (int i = 0; i < documents.size(); i++) {
             System.out.println("Element at index " + i + ": " + documents.get(i).getScore());
         }
+        // Use QuestionAnswerAdvisor to perform RAG:
+        // 1. Search the VectorStore (PGVector) for relevant documents.
+        // 2. Insert the retrieved documents into the {documents} placeholder in the system message.
+        // 3. Send the augmented prompt to the LLM (Ollama).
+        return chatClient.prompt()
+                .user(message)
+                .advisors(searchDB(message))
+                .call()
+                .content();
+    }
+
+    @GetMapping("/lassistant")
+    public String expertRagLocalChat(@RequestParam(value = "message") String message) {
+
+
+        List<Document> documents = vectorStore.similaritySearch(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).similarityThreshold(0.65).topK(5).build());
+
+        System.out.println("Found: "+documents.size());
+        for (int i = 0; i < documents.size(); i++) {
+            System.out.println("Element at index " + i + ": " + documents.get(i).getScore());
+        }
+        // Use QuestionAnswerAdvisor to perform RAG:
+        // 1. Search the VectorStore (PGVector) for relevant documents.
+        // 2. Insert the retrieved documents into the {documents} placeholder in the system message.
+        // 3. Send the augmented prompt to the LLM (Ollama).
+        return lclchatClient.prompt()
+                .user(message)
+                .advisors(searchDB(message))
+                .call()
+                .content();
+    }
+
+    QuestionAnswerAdvisor searchDB(String message) {
         // 1. Define the format you want the model to see
         // The advisor will append this to the user's query.
         String customAdvisorText = """
@@ -66,17 +106,10 @@ public class ExpertRagController {
             """;
         PromptTemplate customPromptTemplate = new PromptTemplate(customAdvisorText);
         QuestionAnswerAdvisor ragAdvisor = QuestionAnswerAdvisor.builder(vectorStore)
-            .searchRequest(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).similarityThreshold(0.65).topK(3).build())
+            .searchRequest(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).similarityThreshold(0.65).topK(5).build())
             .promptTemplate(customPromptTemplate)
-            .build();        
-        // Use QuestionAnswerAdvisor to perform RAG:
-        // 1. Search the VectorStore (PGVector) for relevant documents.
-        // 2. Insert the retrieved documents into the {documents} placeholder in the system message.
-        // 3. Send the augmented prompt to the LLM (Ollama).
-        return chatClient.prompt()
-                .user(message)
-                .advisors(ragAdvisor)
-                .call()
-                .content();
+            .build();
+        return ragAdvisor;
     }
+
 }

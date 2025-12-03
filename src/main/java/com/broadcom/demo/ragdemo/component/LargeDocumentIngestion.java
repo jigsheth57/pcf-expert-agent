@@ -16,24 +16,30 @@ public class LargeDocumentIngestion {
     private final VectorStore vectorStore;
 
     // Inject the PDF resource from the resources folder
-    @Value("classpath:/tas-for-vms.pdf")
-    private Resource pdfResource;
+    @Value("classpath:/tas-for-vms-6.pdf")
+    private Resource taspdfResource;
+
+    @Value("classpath:/tanzu-ops-manager-3-2.pdf")
+    private Resource opsmanpdfResource;
 
     public LargeDocumentIngestion(VectorStore vectorStore) {
         this.vectorStore = vectorStore;
     }
 
     public String ingestPdf() {
-        if (!pdfResource.exists()) {
-            // System.err.println("FATAL ERROR: PDF file not found at " + pdfResource.getFilename());
-            return "FATAL ERROR: PDF file not found at " + pdfResource.getFilename();
+        if (!taspdfResource.exists()) {
+            return "FATAL ERROR: PDF file not found at " + taspdfResource.getFilename();
+        }
+
+        if (!opsmanpdfResource.exists()) {
+            return "FATAL ERROR: PDF file not found at " + opsmanpdfResource.getFilename();
         }
 
         System.out.println("⏳ Starting ingestion of large PDF document...");
 
         // 1. Read the PDF
         // Use PagePdfDocumentReader to read the document, with each page as a Document
-        PagePdfDocumentReader pdfReader = new PagePdfDocumentReader(pdfResource);
+        PagePdfDocumentReader[] pdfReader = {new PagePdfDocumentReader(taspdfResource),new PagePdfDocumentReader(opsmanpdfResource)};
 
         // 2. Chunk the Documents
         // TokenTextSplitter is essential for large docs.
@@ -41,18 +47,20 @@ public class LargeDocumentIngestion {
         // Use the builder to set the chunk size and overlap
         TokenTextSplitter textSplitter = TokenTextSplitter.builder().withChunkSize(550).withMinChunkSizeChars(150).withKeepSeparator(false).build();
 
-        // Read, split, and get the final list of chunks
-        List<Document> documents = pdfReader.get()
-                                            .stream()
-                                            .flatMap(doc -> textSplitter.split(doc).stream())
-                                            .map(this::sanitizeDocumentContent)
-                                            .toList();
+        for (PagePdfDocumentReader pagePdfDocumentReader : pdfReader) {
+            // Read, split, and get the final list of chunks
+            List<Document> documents = pagePdfDocumentReader.get()
+                                                .stream()
+                                                .flatMap(doc -> textSplitter.split(doc).stream())
+                                                .map(this::sanitizeDocumentContent)
+                                                .toList();
 
-        System.out.printf("📄 PDF Read. Total documents/chunks created: %d%n", documents.size());
+            System.out.printf("📄 PDF Read. Total documents/chunks created: %d%n", documents.size());
 
-        // 3. Store the Embeddings
-        // The add() method automatically embeds the documents using the configured OllamaEmbeddingModel
-        vectorStore.add(documents);
+            // 3. Store the Embeddings
+            // The add() method automatically embeds the documents using the configured OllamaEmbeddingModel
+            vectorStore.add(documents);            
+        }
 
         return "✅ Ingestion complete. Documents embedded and stored in PGVector.";
     }

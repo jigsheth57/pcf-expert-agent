@@ -4,15 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TAS/PCF Expert RAG Chat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="script.js"></script>
 </head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>TAS/PCF <span>Expert Chat</span> 🧠</h1>
+            <p class="subtitle">Technical advisory for Tanzu Application Service & Cloud Foundry</p>
+        </header>
+        
+        <div class="chat-input-area">
+            <textarea id="questionInput" placeholder="Ask a question (e.g., 'How do I scale an application instance in PCF?')..."></textarea>
+            
+            <div class="controls">
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="local" name="chattype" value="local" checked>
+                        <label for="local">Local Mode</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="cloud" name="chattype" value="cloud">
+                        <label for="cloud">Cloud Mode</label>
+                    </div>
+                </div>
+
+                <button id="submitButton" onclick="askExpert()">
+                    <span>Ask Expert</span>
+                    <div class="loading-spinner" id="btnSpinner"></div>
+                </button>
+            </div>
+        </div>
+
+        <div class="response-wrapper">
+            <span class="response-label">Expert Response</span>
+            <div id="responseArea" class="chat-output">
+                <div class="placeholder">Response will appear here...</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<!--
 <body>
     <div class="container">
-        <h1>TAS/PCF Expert Advisory Chat 🧠</h1>
+        <h1>TAS/PCF v6 Expert Advisory Chat 🧠</h1>
         <p>Ask a technical question about Pivotal Cloud Foundry (PCF) / Tanzu Application Service (TAS).</p>
         
         <div class="chat-input">
             <textarea id="questionInput" placeholder="e.g., How do I scale an application instance in PCF?"></textarea>
+            <input type="radio" name="chattype" value="local"> Local
+            <input type="radio" name="chattype" value="cloud"> Cloud
             <button id="submitButton" onclick="askExpert()">Ask Expert</button>
         </div>
 
@@ -20,8 +69,6 @@
             <p class="placeholder">Response will appear here...</p>
         </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="script.js"></script>
 </body>
+-->
 </html>
