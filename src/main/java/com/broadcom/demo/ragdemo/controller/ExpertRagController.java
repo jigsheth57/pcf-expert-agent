@@ -33,6 +33,7 @@ public class ExpertRagController {
         @Qualifier("gemmaChatModel") org.springframework.ai.chat.model.ChatModel olchatModel,
         VectorStore vectorStore,
         LargeDocumentIngestion docLoad,
+        @Value("classpath:/expert-system-message-gemini.st") Resource cloudSystemMessage,
         @Value("classpath:/expert-system-message.st") Resource systemMessage) {
 
         this.vectorStore = vectorStore;
@@ -41,7 +42,7 @@ public class ExpertRagController {
 
         // Build the ChatClient with the system message template
         this.chatClient = ChatClient.builder(glchatModel)
-                .defaultSystem(systemMessage)
+                .defaultSystem(cloudSystemMessage)
                 .build();
         this.lclchatClient = ChatClient.builder(olchatModel)
                 .defaultSystem(systemMessage)
