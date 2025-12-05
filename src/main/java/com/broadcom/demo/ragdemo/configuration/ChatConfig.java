@@ -27,6 +27,7 @@ public class ChatConfig {
                 .model("gemini-2.5-flash") // Use the specific model name
                 .temperature(0.7)
                 .maxOutputTokens(2000)
+                .thinkingBudget(512)
                 .build();
         
         return GoogleGenAiChatModel.builder()
@@ -42,6 +43,7 @@ public class ChatConfig {
                 .model("gemini-2.5-pro")
                 .temperature(0.5)
                 .maxOutputTokens(4000)
+                .thinkingBudget(1024)
                 .build();
 
         return GoogleGenAiChatModel.builder()
