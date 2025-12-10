@@ -18,18 +18,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.broadcom.demo.ragdemo.component.LargeDocumentIngestion;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
 @RestController
 @RequestMapping("/api")
 public class ExpertRagController {
 
-    private final ChatClient chatClient;
-    private final ChatClient lclchatClient;
+    private final ChatClient gChatClient;
+    private final ChatClient lChatClient;
     private final VectorStore vectorStore;
-    private final Resource systemMessage;
     private final LargeDocumentIngestion docLoad;
 
     public ExpertRagController(
-        @Qualifier("proModel") org.springframework.ai.chat.model.ChatModel glchatModel,
+        @Qualifier("flashModel") org.springframework.ai.chat.model.ChatModel glchatModel,
         @Qualifier("gemmaChatModel") org.springframework.ai.chat.model.ChatModel olchatModel,
         VectorStore vectorStore,
         LargeDocumentIngestion docLoad,
@@ -37,80 +40,80 @@ public class ExpertRagController {
         @Value("classpath:/expert-system-message.st") Resource systemMessage) {
 
         this.vectorStore = vectorStore;
-        this.systemMessage = systemMessage;
         this.docLoad = docLoad;
 
-        // Build the ChatClient with the system message template
-        this.chatClient = ChatClient.builder(glchatModel)
+        this.gChatClient = ChatClient.builder(glchatModel)
                 .defaultSystem(cloudSystemMessage)
                 .build();
-        this.lclchatClient = ChatClient.builder(olchatModel)
+        this.lChatClient = ChatClient.builder(olchatModel)
                 .defaultSystem(systemMessage)
                 .build();
-
     }
 
+    // Wrapped in Mono to make the blocking PDF ingestion async
     @GetMapping("/loaddata")
-    public String loadPDF() {
-        return docLoad.ingestPdf();
+    public Mono<String> loadPDF() {
+        return Mono.fromCallable(() -> docLoad.ingestPdf())
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
+    // Returns Flux<String> for streaming response
     @GetMapping("/assistant")
-    public String expertRagChat(@RequestParam(value = "message") String message) {
-
-
-        List<Document> documents = vectorStore.similaritySearch(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).similarityThreshold(0.65).topK(5).build());
-
-        System.out.println("Found: "+documents.size());
-        for (int i = 0; i < documents.size(); i++) {
-            System.out.println("Element at index " + i + ": " + documents.get(i).getScore());
-        }
-        // Use QuestionAnswerAdvisor to perform RAG:
-        // 1. Search the VectorStore (PGVector) for relevant documents.
-        // 2. Insert the retrieved documents into the {documents} placeholder in the system message.
-        // 3. Send the augmented prompt to the LLM (Ollama).
-        return chatClient.prompt()
-                .user(message)
-                .advisors(searchDB(message))
-                .call()
-                .content();
+    public Flux<String> expertRagChat(@RequestParam(value = "message") String message) {
+        return performSearchAndChat(gChatClient, message);
     }
 
+    // Returns Flux<String> for streaming response
     @GetMapping("/lassistant")
-    public String expertRagLocalChat(@RequestParam(value = "message") String message) {
+    public Flux<String> expertRagLocalChat(@RequestParam(value = "message") String message) {
+        return performSearchAndChat(lChatClient, message);
+    }
 
+    /**
+     * Helper method to handle the logging (blocking) and the chat stream (reactive).
+     */
+    private Flux<String> performSearchAndChat(ChatClient client, String message) {
+        // 1. Run the similarity search for logging on a background thread (Elastic Scheduler)
+        return Mono.fromRunnable(() -> {
+            List<Document> documents = vectorStore.similaritySearch(
+                    SearchRequest.builder()
+                            .query("Represent this sentence for searching relevant passages: " + message)
+                            .similarityThreshold(0.65)
+                            .topK(5)
+                            .build()
+            );
 
-        List<Document> documents = vectorStore.similaritySearch(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).similarityThreshold(0.65).topK(5).build());
-
-        System.out.println("Found: "+documents.size());
-        for (int i = 0; i < documents.size(); i++) {
-            System.out.println("Element at index " + i + ": " + documents.get(i).getScore());
-        }
-        // Use QuestionAnswerAdvisor to perform RAG:
-        // 1. Search the VectorStore (PGVector) for relevant documents.
-        // 2. Insert the retrieved documents into the {documents} placeholder in the system message.
-        // 3. Send the augmented prompt to the LLM (Ollama).
-        return lclchatClient.prompt()
+            System.out.println("Found: " + documents.size());
+            for (int i = 0; i < documents.size(); i++) {
+                System.out.println("Element at index " + i + ": " + documents.get(i).getScore());
+            }
+        })
+        .subscribeOn(Schedulers.boundedElastic())
+        // 2. Once logging is done, switch to the ChatClient stream
+        .thenMany(
+            client.prompt()
                 .user(message)
                 .advisors(searchDB(message))
-                .call()
-                .content();
+                .stream() // Use stream() for WebFlux/SSE
+                .content()
+        );
     }
 
     QuestionAnswerAdvisor searchDB(String message) {
-        // 1. Define the format you want the model to see
-        // The advisor will append this to the user's query.
         String customAdvisorText = """
             <context>
             {question_answer_context}
             </context>
             """;
         PromptTemplate customPromptTemplate = new PromptTemplate(customAdvisorText);
-        QuestionAnswerAdvisor ragAdvisor = QuestionAnswerAdvisor.builder(vectorStore)
-            .searchRequest(SearchRequest.builder().query("Represent this sentence for searching relevant passages: "+message).similarityThreshold(0.65).topK(5).build())
+        
+        return QuestionAnswerAdvisor.builder(vectorStore)
+            .searchRequest(SearchRequest.builder()
+                    .query("Represent this sentence for searching relevant passages: " + message)
+                    .similarityThreshold(0.65)
+                    .topK(5)
+                    .build())
             .promptTemplate(customPromptTemplate)
             .build();
-        return ragAdvisor;
     }
-
 }
